@@ -1,0 +1,88 @@
+import { Filter, Trash2 } from "lucide-react";
+import { supabase } from "@/lib/data/supabase";
+import { EtudiantModal } from "@/components/ui/EtudiantModal";
+import { SearchInput } from "@/components/ui/SearchInput";
+
+export default async function EtudiantsPage(props: { searchParams: Promise<{ q?: string }> }) {
+  const searchParams = await props.searchParams;
+  const q = (searchParams.q || "").toLowerCase();
+  
+  const { data: studentsData } = await supabase.from('students').select('*');
+  const etudiants = (studentsData || []).filter(s => 
+    s.firstName.toLowerCase().includes(q) || 
+    s.lastName.toLowerCase().includes(q)
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Étudiants & Bénéficiaires</h1>
+        <div className="flex items-center gap-3">
+          <SearchInput placeholder="Rechercher un étudiant..." />
+          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors">
+            <Filter className="w-4 h-4" />
+            <span className="hidden md:inline">Filtres</span>
+          </button>
+          <EtudiantModal />
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-gray-400 font-medium border-b border-border">
+              <tr>
+                <th className="pb-3 font-normal whitespace-nowrap">Étudiant</th>
+                <th className="pb-3 font-normal whitespace-nowrap">Filière</th>
+                <th className="pb-3 font-normal whitespace-nowrap">Niveau</th>
+                <th className="pb-3 font-normal whitespace-nowrap">Statut</th>
+                <th className="pb-3 font-normal text-right whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {etudiants.map((s) => (
+                <tr key={s.id} className="border-b border-border/50 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                  <td className="py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-lg">
+                        {s.firstName.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">{s.firstName} {s.lastName}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-4 font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">{s.field}</td>
+                  <td className="py-4 text-gray-500 whitespace-nowrap">{s.level}</td>
+                  <td className="py-4 whitespace-nowrap">
+                    <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-1 rounded-full text-xs font-semibold">
+                      {s.status}
+                    </span>
+                  </td>
+                  <td className="py-4 whitespace-nowrap text-right">
+                    <form action={async () => {
+                      "use server";
+                      const { deleteStudent } = await import("@/app/actions");
+                      await deleteStudent(s.id);
+                    }}>
+                      <button type="submit" className="text-gray-400 hover:text-red-500 p-2 transition-colors rounded-lg hover:bg-red-50" title="Supprimer">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {etudiants.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-gray-500">
+                    Aucun étudiant trouvé.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
