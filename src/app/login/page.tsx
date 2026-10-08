@@ -68,7 +68,7 @@ export default function LoginPage() {
                <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
                  <span className="text-black font-bold text-xl">C</span>
                </div>
-               <span className="font-bold text-xl tracking-wide">CJEP</span>
+               <span className="font-bold text-xl tracking-wide">COMITÉ JOSEPH</span>
             </div>
             
             <h2 className="text-3xl font-bold mb-4 leading-tight">
@@ -77,7 +77,7 @@ export default function LoginPage() {
             </h2>
             <div>
               <p className="font-medium text-lg">Psaumes 119:105</p>
-              <p className="text-white/70 text-sm">Comité des Jeunes pour l&apos;Éducation et la Paix</p>
+              <p className="text-white/70 text-sm">Pour les Etudes Pastorales</p>
             </div>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function LoginPage() {
           <div className="max-w-md w-full mx-auto relative z-10">
             
             <div className="text-center mb-10">
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Bienvenue sur CJEP</h1>
+              <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Bienvenue</h1>
               <p className="text-gray-500">Gérez vos contributeurs, étudiants et flux financiers facilement.</p>
             </div>
 
