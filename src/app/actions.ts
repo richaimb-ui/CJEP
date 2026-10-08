@@ -169,12 +169,29 @@ export async function deleteIncome(id: string) {
 export async function createUser(formData: FormData) {
   const name = formData.get("name") as string;
   const [firstName, ...lastNameArr] = name.split(" ");
+  const email = formData.get("email") as string;
+  const role = formData.get("role") as string;
   
-  await supabase.from("users").insert({
+  const { supabaseAdmin } = await import("@/lib/data/supabase");
+  
+  if (!supabaseAdmin) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY n'est pas configuré. Impossible de créer un compte avec Auth.");
+  }
+
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: email,
+    password: "Password123!",
+    email_confirm: true,
+  });
+
+  if (authError) throw authError;
+
+  await supabaseAdmin.from("users").insert({
+    id: authData.user.id,
     "firstName": firstName,
     "lastName": lastNameArr.join(" "),
-    email: formData.get("email") as string,
-    role: formData.get("role") as string,
+    email: email,
+    role: role,
     "mustChangePassword": true
   });
   
@@ -187,6 +204,12 @@ export async function updatePassword(userId: string, _newPassword: string) {
 }
 
 export async function deleteUser(id: string) {
-  await supabase.from("users").delete().eq("id", id);
+  const { supabaseAdmin } = await import("@/lib/data/supabase");
+  if (supabaseAdmin) {
+    await supabaseAdmin.auth.admin.deleteUser(id);
+    await supabaseAdmin.from("users").delete().eq("id", id);
+  } else {
+    await supabase.from("users").delete().eq("id", id);
+  }
   revalidatePath("/parametres");
 }

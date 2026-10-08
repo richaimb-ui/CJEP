@@ -3,12 +3,14 @@
 import { Download, FileText, Calendar, ChevronDown, Check } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/data/supabase";
+import { generateMonthlyReport, generateContributorReport } from "@/lib/pdf";
 
 export default function RapportsPage() {
   const [contributors, setContributors] = useState<{id: string, firstName: string, lastName: string}[]>([]);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("Octobre 2026");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,16 +44,20 @@ export default function RapportsPage() {
             Générez un rapport détaillé du mois incluant les soldes, les entrées, les dépenses et les indicateurs clés de performance.
           </p>
           <div className="flex items-center gap-3">
-            <select className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <select 
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
               <option>Octobre 2026</option>
               <option>Septembre 2026</option>
               <option>Août 2026</option>
             </select>
             <button 
               onClick={() => {
-                alert("Génération du rapport mensuel en cours... Le téléchargement PDF démarrera sous peu.");
+                generateMonthlyReport(selectedMonth);
               }}
-              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-hover transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-hover transition-colors flex items-center gap-2 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               Générer
@@ -131,9 +137,25 @@ export default function RapportsPage() {
             </div>
             <button 
               onClick={() => {
-                alert("Génération du relevé en cours...");
+                let idsToGenerate = selectedIds;
+                if (selectedIds.includes("ALL_JOSEPHS")) {
+                  idsToGenerate = contributors
+                    .filter(c => c.firstName === "Joseph")
+                    .map(c => c.id);
+                  if (idsToGenerate.length === 0) {
+                    alert("Aucun Joseph trouvé.");
+                    return;
+                  }
+                }
+                
+                if (idsToGenerate.length === 0) {
+                  alert("Veuillez sélectionner au moins un contributeur.");
+                  return;
+                }
+                
+                generateContributorReport(idsToGenerate);
               }}
-              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-hover transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               Générer

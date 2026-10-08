@@ -18,15 +18,28 @@ export default function LoginPage() {
     setIsPending(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast.success("Connexion réussie !");
-      router.push("/tableau-de-bord");
+      // Check if user must change password
+      const { data: userData } = await supabase
+        .from('users')
+        .select('mustChangePassword')
+        .eq('email', email)
+        .limit(1)
+        .maybeSingle();
+
+      if (userData?.mustChangePassword) {
+        toast.info("Vous devez changer votre mot de passe.");
+        router.push("/change-password");
+      } else {
+        toast.success("Connexion réussie !");
+        router.push("/tableau-de-bord");
+      }
     } catch (error: unknown) {
       const err = error as Error;
       toast.error(err.message || "Email ou mot de passe incorrect");
