@@ -18,7 +18,7 @@ export default async function ParametresPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Paramètres de l'Organisation</h1>
+        <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-gray-900">Paramètres de l'Organisation</h1>
       </div>
 
       <ParametresForm settings={settings} />
@@ -32,6 +32,7 @@ export default async function ParametresPage() {
               <tr>
                 <th className="px-4 py-2 font-normal whitespace-nowrap">Nom</th>
                 <th className="px-4 py-2 font-normal whitespace-nowrap">Email</th>
+                <th className="px-4 py-2 font-normal whitespace-nowrap">Téléphone</th>
                 <th className="px-4 py-2 font-normal whitespace-nowrap">Rôle</th>
                 <th className="px-4 py-2 font-normal whitespace-nowrap">Actions</th>
               </tr>
@@ -41,6 +42,7 @@ export default async function ParametresPage() {
                 <tr key={user.id} className="border-t border-border/50 group hover:bg-gray-50 dark:hover:bg-gray-800/20">
                   <td className="px-4 py-3 font-semibold whitespace-nowrap">{user.firstName} {user.lastName}</td>
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{user.email}</td>
+                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{user.phone || '-'}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${
                       user.role === 'Admin' ? 'bg-primary-light text-primary' :

@@ -20,8 +20,8 @@ export default async function EntreesPage(props: { searchParams: Promise<{ q?: s
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Entrées Financières</h1>
-        <div className="flex items-center gap-3">
+        <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-gray-900">Entrées Financières</h1>
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <SearchInput placeholder="Rechercher une entrée (Réf, Source)..." />
           <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors">
             <Filter className="w-4 h-4" />

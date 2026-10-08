@@ -49,8 +49,8 @@ export default async function CotisationsPage(props: { searchParams: Promise<{ a
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Matrice des Cotisations</h1>
-        <div className="flex items-center gap-4">
+        <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-gray-900">Matrice des Cotisations</h1>
+        <div className="flex flex-wrap items-center gap-2 md:gap-4">
           <div className="flex items-center gap-2">
             <YearSelector />
           </div>

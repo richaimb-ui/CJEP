@@ -110,28 +110,23 @@ export function DashboardCharts({ incomes, expenses }: DashboardChartsProps) {
             <h3 className="text-lg font-bold">Entrées et Dépenses</h3>
           </div>
           <div className="md:hidden">
-            <h3 className="text-lg font-bold text-gray-900 tracking-tight">Total savings</h3>
-            <p className="text-sm text-gray-500 mt-1">you have saved this month</p>
+            <h3 className="text-lg font-bold text-gray-900 tracking-tight">Total en caisse</h3>
+            <p className="text-sm text-gray-500 mt-1">votre évolution globale</p>
           </div>
           <select 
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value as "Semaine" | "Mois" | "Année")}
             className="flex items-center gap-2 px-3 py-1.5 border border-gray-100 md:border-border rounded-lg text-xs sm:text-sm bg-gray-50 md:bg-background focus:outline-none focus:ring-0 cursor-pointer text-gray-600 font-medium"
           >
-            <option value="Année">This year</option>
-            <option value="Mois">This month</option>
-            <option value="Semaine">This week</option>
+            <option value="Année">Cette année</option>
+            <option value="Mois">Ce mois</option>
+            <option value="Semaine">Cette semaine</option>
           </select>
         </div>
         <div className="h-64">
-          <div className="md:hidden h-full">
-            <DashboardAreaChart data={groupedData} />
-          </div>
-          <div className="hidden md:block h-full">
-            <DashboardBarChart data={groupedData} />
-          </div>
+          <DashboardBarChart data={groupedData} />
         </div>
-        <div className="hidden md:flex items-center justify-end gap-4 mt-4 text-sm text-gray-500">
+        <div className="flex items-center justify-end gap-4 mt-4 text-sm text-gray-500">
           <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#2b64e3]"></span> Entrées</div>
           <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#e2e2ea]"></span> Dépenses</div>
         </div>

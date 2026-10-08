@@ -14,7 +14,7 @@ export function AppShell({ children, orgName = "COMITÉ JOSEPH", user }: { child
 
       <div className="flex-1 flex flex-col min-w-0 w-full overflow-hidden pb-16 md:pb-0">
         <Header user={user} />
-        <main className="flex-1 overflow-y-auto w-full">
+        <main className="flex-1 overflow-y-auto w-full px-6 py-6 md:px-8 md:py-8">
           {children}
         </main>
       </div>

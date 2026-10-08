@@ -25,7 +25,16 @@ export async function getDashboardStats() {
   const now = new Date();
   const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  const currentYearPrefix = `${now.getFullYear()}`;
+  
+  // Calculate start of current week (Monday)
+  const d = new Date(now);
+  const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6:1);
+  const startOfWeek = new Date(d.setDate(diff));
+  startOfWeek.setHours(0,0,0,0);
+
   const totalIncomesWithOpening = incomes.reduce((sum, inc) => sum + inc.amount, 0) + openingBalance;
+  const totalIncomes = incomes.reduce((sum, inc) => sum + inc.amount, 0); // Exclude opening balance for pure incomes display
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   
   const currentBalance = totalIncomesWithOpening - totalExpenses;
@@ -34,6 +43,14 @@ export async function getDashboardStats() {
     .filter(i => i.receivedOn && i.receivedOn.startsWith(currentMonthPrefix))
     .reduce((sum, inc) => sum + inc.amount, 0);
     
+  const thisYearIncomes = incomes
+    .filter(i => i.receivedOn && i.receivedOn.startsWith(currentYearPrefix))
+    .reduce((sum, inc) => sum + inc.amount, 0);
+    
+  const thisWeekIncomes = incomes
+    .filter(i => i.receivedOn && new Date(i.receivedOn) >= startOfWeek)
+    .reduce((sum, inc) => sum + inc.amount, 0);
+
   const thisMonthExpenses = expenses
     .filter(i => i.spentOn && i.spentOn.startsWith(currentMonthPrefix))
     .reduce((sum, exp) => sum + exp.amount, 0);
@@ -97,7 +114,10 @@ export async function getDashboardStats() {
   return {
     currentBalance,
     totalIncomes: totalIncomesWithOpening,
+    pureTotalIncomes: totalIncomes,
     thisMonthIncomes,
+    thisYearIncomes,
+    thisWeekIncomes,
     thisMonthExpenses,
     pendingExpenses,
     lateContributors,

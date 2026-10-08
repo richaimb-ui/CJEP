@@ -40,10 +40,13 @@ CREATE TABLE IF NOT EXISTS public.users (
   "firstName" text NOT NULL,
   "lastName" text NOT NULL,
   email text UNIQUE NOT NULL,
+  phone text,
   role text NOT NULL DEFAULT 'Membre',
   "mustChangePassword" boolean DEFAULT true,
   "createdAt" timestamp with time zone DEFAULT now()
 );
+
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone text;
 
 -- Désactiver RLS sur users
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;

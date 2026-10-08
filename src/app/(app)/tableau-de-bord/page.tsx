@@ -1,12 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Search, Download, Plus, Wallet, CreditCard, Banknote, ChevronDown } from "lucide-react";
+import { ArrowUpRight, Search, Download, CreditCard, Banknote, Wallet, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 import { getDashboardStats } from "@/lib/domain/finance";
 import { DashboardCharts } from "@/components/ui/DashboardCharts";
+import { DashboardMobileHeader } from "@/components/ui/DashboardMobileHeader";
 
 export default async function Dashboard() {
   const stats = await getDashboardStats();
@@ -17,41 +18,17 @@ export default async function Dashboard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-2 md:space-y-8">
-      {/* MOBILE FINTECH HEADER */}
-      <div className="md:hidden flex flex-col items-center mt-4 mb-8 px-4">
-        <div className="bg-white text-gray-700 px-4 py-1.5 rounded-full text-[11px] font-semibold flex items-center gap-2 mb-6 shadow-sm border border-gray-100">
-          <Wallet className="w-3.5 h-3.5 text-blue-600" />
-          Compte Principal
-          <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-1" />
-        </div>
-        
-        <h2 className="text-[40px] leading-none font-extrabold tracking-tight text-gray-900 mb-2 flex items-baseline">
-          {new Intl.NumberFormat('fr-FR').format(stats.currentBalance)}
-          <span className="text-xl text-gray-400 font-semibold ml-1">.00</span>
-        </h2>
-        <p className="text-emerald-500 font-semibold text-sm flex items-center gap-1 mb-8">
-          Entrées: {formatCFA(stats.totalIncomes)}
-        </p>
-
-        <div className="flex items-center gap-3 w-full">
-          <Link href="/entrees" className="flex-1">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 font-semibold text-[15px] shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)]">
-              <Plus className="w-5 h-5 mr-1" />
-              Ajouter
-            </Button>
-          </Link>
-          <Link href="/depenses" className="flex-1">
-            <Button variant="secondary" className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-2xl h-14 font-semibold text-[15px] border-none shadow-none">
-              <ArrowUpRight className="w-5 h-5 mr-1" />
-              Dépenser
-            </Button>
-          </Link>
-        </div>
-      </div>
+    <div className="max-w-6xl mx-auto space-y-4 md:space-y-8">
+      <DashboardMobileHeader 
+        currentBalance={stats.currentBalance}
+        totalIncomes={stats.totalIncomes}
+        thisMonthIncomes={stats.thisMonthIncomes}
+        thisYearIncomes={stats.thisYearIncomes}
+        thisWeekIncomes={stats.thisWeekIncomes}
+      />
 
       {/* MOBILE: Latest Contributors / Retards */}
-      <div className="md:hidden px-4 mb-2">
+      <div className="md:hidden mb-2">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-gray-900 text-base">En retard</h3>
           <Link href="/contributeurs" className="text-blue-600 text-[13px] font-semibold">Voir tout</Link>
@@ -80,7 +57,7 @@ export default async function Dashboard() {
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Tableau de bord</h1>
             <Badge variant="secondary" className="bg-white border-border text-[10px] sm:text-xs text-muted-foreground font-normal mt-1 sm:mt-0">
-              MàJ: à l'instant
+              MàJ: à l&apos;instant
             </Badge>
           </div>
         </div>
