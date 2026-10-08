@@ -15,6 +15,7 @@ export interface Database {
           firstName: string
           lastName: string
           email: string
+          phone?: string
           role: string
           mustChangePassword?: boolean
         }
@@ -23,6 +24,7 @@ export interface Database {
           firstName: string
           lastName: string
           email: string
+          phone?: string
           role: string
           mustChangePassword?: boolean
         }
@@ -31,6 +33,7 @@ export interface Database {
           firstName?: string
           lastName?: string
           email?: string
+          phone?: string
           role?: string
           mustChangePassword?: boolean
         }

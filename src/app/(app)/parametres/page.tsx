@@ -1,9 +1,10 @@
 import { Trash2 } from "lucide-react";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/server";
 import { MembreModal } from "@/components/ui/MembreModal";
 import { ParametresForm } from "@/components/ui/ParametresForm";
 
 export default async function ParametresPage() {
+  const supabase = await createClient();
   const { data: orgData } = await supabase.from('organization').select('*').single();
   const { data: usersData } = await supabase.from('users').select('*');
   
@@ -50,15 +51,18 @@ export default async function ParametresPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 w-10 whitespace-nowrap">
-                    <form action={async () => {
-                      "use server";
-                      const { deleteUser } = await import("@/app/actions");
-                      await deleteUser(user.id);
-                    }}>
-                      <button type="submit" className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </form>
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MembreModal user={{ id: user.id, name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role as any, phone: user.phone || '' }} />
+                      <form action={async () => {
+                        "use server";
+                        const { deleteUser } = await import("@/app/actions");
+                        await deleteUser(user.id);
+                      }}>
+                        <button type="submit" className="text-gray-400 hover:text-red-500" title="Supprimer">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               ))}

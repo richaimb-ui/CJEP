@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { updateSession } from '@/utils/supabase/middleware';
 
 // Store simple pour le rate limiting en mémoire
-// Note : En production (ex: Vercel), cela fonctionnera par instance. 
-// Pour un rate limiting parfait, il est recommandé d'utiliser Redis (Upstash) ou Vercel KV.
 const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
 
 const RATE_LIMIT = 50; // Nombre de requêtes max
 const WINDOW_MS = 60 * 1000; // Fenêtre d'1 minute
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Ignorer les fichiers statiques et images
   if (
     request.nextUrl.pathname.startsWith('/_next') ||
@@ -40,12 +39,14 @@ export function middleware(request: NextRequest) {
     return new NextResponse('Too Many Requests', { status: 429 });
   }
 
-  // Optionnel : Ajouter les headers de sécurité
-  const response = NextResponse.next();
-  response.headers.set('X-RateLimit-Limit', RATE_LIMIT.toString());
-  response.headers.set('X-RateLimit-Remaining', Math.max(0, RATE_LIMIT - limitData.count).toString());
+  // Update Supabase session and check Auth
+  const authResponse = await updateSession(request);
+
+  // Ajouter les headers de sécurité au response de Auth
+  authResponse.headers.set('X-RateLimit-Limit', RATE_LIMIT.toString());
+  authResponse.headers.set('X-RateLimit-Remaining', Math.max(0, RATE_LIMIT - limitData.count).toString());
   
-  return response;
+  return authResponse;
 }
 
 export const config = {

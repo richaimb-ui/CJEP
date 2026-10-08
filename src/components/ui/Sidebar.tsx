@@ -32,20 +32,16 @@ export function Sidebar({ onClose, orgName = "COMITÉ JOSEPH" }: { onClose?: () 
 
   return (
     <aside className="w-64 bg-card border-r border-border h-full flex flex-col transition-colors duration-200">
-      <div className="p-6 flex items-center justify-between">
+      <div className="p-6">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
             <Image src="/Logo%20C.jpg" alt="Logo" width={40} height={40} className="object-cover" />
           </div>
-          <span className="text-xl font-extrabold tracking-tight text-primary">COMITÉ JOSEPH</span>
+          <div className="flex flex-col">
+            <span className="text-xl font-extrabold tracking-tight text-primary leading-tight">COMITÉ JOSEPH</span>
+            <span className="text-xs font-medium text-gray-500">{orgName}</span>
+          </div>
         </Link>
-      </div>
-
-      <div className="px-4 py-2">
-        <button className="w-full flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-          {orgName}
-          <ChevronDown className="w-4 h-4 text-gray-500" />
-        </button>
       </div>
 
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">

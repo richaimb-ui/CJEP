@@ -1,9 +1,10 @@
 import { Filter, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/server";
 import { EntreeModal } from "@/components/ui/EntreeModal";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 export default async function EntreesPage(props: { searchParams: Promise<{ q?: string }> }) {
+  const supabase = await createClient();
   const searchParams = await props.searchParams;
   const q = (searchParams.q || "").toLowerCase();
   

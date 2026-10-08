@@ -1,14 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Filter, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/server";
 import { ContributeurModal } from "@/components/ui/ContributeurModal";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 export default async function ContributeursPage(props: { searchParams: Promise<{ q?: string }> }) {
+  const supabase = await createClient();
   const searchParams = await props.searchParams;
   const q = (searchParams.q || "").toLowerCase();
   
   const { data: contributeursData } = await supabase.from('contributors').select('*');
-  const contributeurs = (contributeursData || []).filter(c => 
+  const contributeurs = (contributeursData || []).filter((c: any) => 
     c.firstName.toLowerCase().includes(q) || 
     c.lastName.toLowerCase().includes(q)
   );
@@ -43,8 +45,8 @@ export default async function ContributeursPage(props: { searchParams: Promise<{
               </tr>
             </thead>
             <tbody>
-              {contributeurs.map((c) => {
-                const pledge = pledges.find(p => p.contributorId === c.id);
+              {contributeurs.map((c: any) => {
+                const pledge = pledges.find((p: any) => p.contributorId === c.id);
                 const engagement = pledge ? pledge.monthlyAmount : 0;
                 
                 // For now, mock the status

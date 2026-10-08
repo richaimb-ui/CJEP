@@ -1,9 +1,10 @@
 import { Filter } from "lucide-react";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/server";
 import { YearSelector } from "@/components/ui/YearSelector";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 export default async function CotisationsPage(props: { searchParams: Promise<{ annee?: string, q?: string }> }) {
+  const supabase = await createClient();
   const searchParams = await props.searchParams;
   const currentYear = new Date().getFullYear().toString();
   const year = searchParams.annee || currentYear;

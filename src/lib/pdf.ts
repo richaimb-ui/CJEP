@@ -1,9 +1,10 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatCFA } from '@/lib/utils';
-import { supabase } from '@/lib/data/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 export async function generateMonthlyReport(monthString: string) {
+  const supabase = createClient();
   // 1. Fetch organization config
   const { data: org } = await supabase.from('organization').select('*').limit(1).maybeSingle();
   const orgName = org?.name || "COMITÉ JOSEPH pour les Etudes Pastorales";
@@ -110,6 +111,7 @@ export async function generateMonthlyReport(monthString: string) {
 }
 
 export async function generateContributorReport(contributorIds: string[]) {
+  const supabase = createClient();
   const { data: org } = await supabase.from('organization').select('*').limit(1).maybeSingle();
   const orgName = org?.name || "COMITÉ JOSEPH pour les Etudes Pastorales";
 

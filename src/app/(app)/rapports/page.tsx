@@ -2,10 +2,11 @@
 
 import { Download, FileText, Calendar, ChevronDown, Check } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/client";
 import { generateMonthlyReport, generateContributorReport } from "@/lib/pdf";
 
 export default function RapportsPage() {
+  const supabase = createClient();
   const [contributors, setContributors] = useState<{id: string, firstName: string, lastName: string}[]>([]);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

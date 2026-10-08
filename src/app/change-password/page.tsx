@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { KeyRound, ArrowRight } from "lucide-react";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPending, setIsPending] = useState(false);

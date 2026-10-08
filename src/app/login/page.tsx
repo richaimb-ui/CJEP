@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);

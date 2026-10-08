@@ -1,16 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/server";
+const getSupabase = () => createClient();
 
 export async function validateExpense(expenseId: string) {
-  await supabase.from("expenses").update({ status: "Validée" }).eq("id", expenseId);
+  await (await getSupabase()).from("expenses").update({ status: "Validée" }).eq("id", expenseId);
   revalidatePath("/tableau-de-bord");
   revalidatePath("/depenses");
 }
 
 export async function rejectExpense(expenseId: string) {
-  await supabase.from("expenses").update({ status: "Rejetée" }).eq("id", expenseId);
+  await (await getSupabase()).from("expenses").update({ status: "Rejetée" }).eq("id", expenseId);
   revalidatePath("/tableau-de-bord");
   revalidatePath("/depenses");
 }
@@ -25,7 +26,7 @@ export async function createIncome(formData: FormData) {
   
   if (type === "Cotisation" && contributorId && startMonthStr && monthsCount > 0) {
     const amountPerMonth = amount / monthsCount;
-    const { data: contributor } = await supabase.from("contributors").select("*").eq("id", contributorId).single();
+    const { data: contributor } = await (await getSupabase()).from("contributors").select("*").eq("id", contributorId).single();
     
     const [startYear, startMonth] = startMonthStr.split("-").map(Number);
     const currentDate = new Date(startYear, startMonth - 1, 1);
@@ -34,7 +35,7 @@ export async function createIncome(formData: FormData) {
       const iterYear = currentDate.getFullYear();
       const iterMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
       
-      const { error } = await supabase.from("incomes").insert({
+      const { error } = await (await getSupabase()).from("incomes").insert({
         ref: `ENT-${iterYear}-${Math.floor(Math.random() * 10000)}`,
         type,
         "contributorId": contributorId,
@@ -49,7 +50,7 @@ export async function createIncome(formData: FormData) {
       currentDate.setMonth(currentDate.getMonth() + 1);
     }
   } else {
-    const { error } = await supabase.from("incomes").insert({
+    const { error } = await (await getSupabase()).from("incomes").insert({
       ref: `ENT-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
       type,
       "contributorId": contributorId || undefined,
@@ -76,7 +77,7 @@ export async function createExpense(formData: FormData) {
     category = customCategory.trim();
   }
   
-  const { error } = await supabase.from("expenses").insert({
+  const { error } = await (await getSupabase()).from("expenses").insert({
     ref: `DEP-2026-${Math.floor(Math.random() * 10000)}`,
     category,
     amount,
@@ -96,7 +97,7 @@ export async function createContributor(formData: FormData) {
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
   
-  const { data: contributor, error: insertError } = await supabase.from("contributors").insert({
+  const { data: contributor, error: insertError } = await (await getSupabase()).from("contributors").insert({
     "firstName": firstName,
     "lastName": lastName,
     email: email,
@@ -109,7 +110,7 @@ export async function createContributor(formData: FormData) {
 
   const engagement = Number(formData.get("engagement"));
   if (engagement > 0 && contributor) {
-    await supabase.from("pledges").insert({
+    await (await getSupabase()).from("pledges").insert({
       "contributorId": contributor.id,
       "monthlyAmount": engagement,
       "startMonth": new Date().toISOString().slice(0, 7),
@@ -127,7 +128,7 @@ export async function createStudent(formData: FormData) {
   const school = formData.get("school") as string;
   const program = formData.get("program") as string;
   
-  await supabase.from("students").insert({
+  await (await getSupabase()).from("students").insert({
     "firstName": firstName,
     "lastName": lastName,
     field: school,
@@ -140,7 +141,7 @@ export async function createStudent(formData: FormData) {
 }
 
 export async function updateSettings(formData: FormData) {
-  await supabase.from("organization").update({
+  await (await getSupabase()).from("organization").update({
     name: formData.get("name") as string,
     "openingBalance": Number(formData.get("openingBalance"))
   }).neq("id", "00000000-0000-0000-0000-000000000000"); // Update all or specific
@@ -150,18 +151,18 @@ export async function updateSettings(formData: FormData) {
 }
 
 export async function deleteContributor(id: string) {
-  await supabase.from("contributors").delete().eq("id", id);
+  await (await getSupabase()).from("contributors").delete().eq("id", id);
   revalidatePath("/contributeurs");
   revalidatePath("/cotisations");
 }
 
 export async function deleteStudent(id: string) {
-  await supabase.from("students").delete().eq("id", id);
+  await (await getSupabase()).from("students").delete().eq("id", id);
   revalidatePath("/etudiants");
 }
 
 export async function deleteIncome(id: string) {
-  await supabase.from("incomes").delete().eq("id", id);
+  await (await getSupabase()).from("incomes").delete().eq("id", id);
   revalidatePath("/entrees");
   revalidatePath("/tableau-de-bord");
 }
@@ -171,6 +172,8 @@ export async function createUser(formData: FormData) {
   const [firstName, ...lastNameArr] = name.split(" ");
   const email = formData.get("email") as string;
   const role = formData.get("role") as string;
+  const phone = formData.get("phone") as string;
+  const password = formData.get("password") as string;
   
   const { supabaseAdmin } = await import("@/lib/data/supabase");
   
@@ -180,7 +183,7 @@ export async function createUser(formData: FormData) {
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: email,
-    password: "Password123!",
+    password: password || "Password123!",
     email_confirm: true,
   });
 
@@ -191,6 +194,7 @@ export async function createUser(formData: FormData) {
     "firstName": firstName,
     "lastName": lastNameArr.join(" "),
     email: email,
+    phone: phone,
     role: role,
     "mustChangePassword": true
   });
@@ -198,8 +202,29 @@ export async function createUser(formData: FormData) {
   revalidatePath("/parametres");
 }
 
+export async function updateUser(formData: FormData) {
+  const id = formData.get("id") as string;
+  const name = formData.get("name") as string;
+  const [firstName, ...lastNameArr] = name.split(" ");
+  const role = formData.get("role") as string;
+  const phone = formData.get("phone") as string;
+  
+  const { supabaseAdmin } = await import("@/lib/data/supabase");
+  
+  if (supabaseAdmin) {
+    await supabaseAdmin.from("users").update({
+      "firstName": firstName,
+      "lastName": lastNameArr.join(" "),
+      phone: phone,
+      role: role
+    }).eq("id", id);
+  }
+  
+  revalidatePath("/parametres");
+}
+
 export async function updatePassword(userId: string, _newPassword: string) {
-  await supabase.from("users").update({ "mustChangePassword": false }).eq("id", userId);
+  await (await getSupabase()).from("users").update({ "mustChangePassword": false }).eq("id", userId);
   revalidatePath("/parametres");
 }
 
@@ -209,7 +234,7 @@ export async function deleteUser(id: string) {
     await supabaseAdmin.auth.admin.deleteUser(id);
     await supabaseAdmin.from("users").delete().eq("id", id);
   } else {
-    await supabase.from("users").delete().eq("id", id);
+    await (await getSupabase()).from("users").delete().eq("id", id);
   }
   revalidatePath("/parametres");
 }

@@ -1,6 +1,7 @@
-import { supabase } from "../data/supabase";
+import { createClient } from "@/utils/supabase/server";
 
 export async function getDashboardStats() {
+  const supabase = await createClient();
   const [
     { data: incomesData },
     { data: expensesData },

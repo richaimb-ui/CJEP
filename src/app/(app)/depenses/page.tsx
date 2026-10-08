@@ -1,9 +1,10 @@
 import { Filter, CheckCircle, XCircle } from "lucide-react";
-import { supabase } from "@/lib/data/supabase";
+import { createClient } from "@/utils/supabase/server";
 import { DepenseModal } from "@/components/ui/DepenseModal";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 export default async function DepensesPage(props: { searchParams: Promise<{ q?: string }> }) {
+  const supabase = await createClient();
   const searchParams = await props.searchParams;
   const q = (searchParams.q || "").toLowerCase();
   

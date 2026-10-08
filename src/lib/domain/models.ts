@@ -59,6 +59,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: 'Admin' | 'Membre' | 'Observateur';
   password?: string;
   mustChangePassword?: boolean;
