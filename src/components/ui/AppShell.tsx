@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
-export function AppShell({ children, orgName = "CJEP Asso" }: { children: React.ReactNode, orgName?: string }) {
+export function AppShell({ children, orgName = "COMITÉ JOSEPH" }: { children: React.ReactNode, orgName?: string }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (

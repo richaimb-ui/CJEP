@@ -1,17 +1,12 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { formatCFA } from '@/lib/utils';
 import { supabase } from '@/lib/data/supabase';
-
-// Helper pour ajouter jsPDF-autotable aux types TypeScript
-interface jsPDFCustom extends jsPDF {
-  autoTable: (options: any) => void;
-}
 
 export async function generateMonthlyReport(monthString: string) {
   // 1. Fetch organization config
   const { data: org } = await supabase.from('organization').select('*').limit(1).maybeSingle();
-  const orgName = org?.name || "Comité des Jeunes";
+  const orgName = org?.name || "COMITÉ JOSEPH pour les Etudes Pastorales";
 
   // 2. Compute date range (e.g. "Octobre 2026")
   const parts = monthString.split(" ");
@@ -39,10 +34,23 @@ export async function generateMonthlyReport(monthString: string) {
   const totalExpenses = (expenses || []).reduce((acc, curr) => acc + curr.amount, 0);
 
   // 4. Create PDF
-  const doc = new jsPDF() as jsPDFCustom;
+  const doc = new jsPDF();
   
+  // Load and add logo
+  const img = new window.Image();
+  img.src = '/Logo%20C.jpg';
+  await new Promise((resolve) => {
+    img.onload = resolve;
+    img.onerror = resolve; // Ignore error to not crash if logo is missing
+  });
+  
+  if (img.complete && img.naturalWidth > 0) {
+    // Add logo to top right (x: 170, y: 15, w: 25, h: 25)
+    doc.addImage(img, 'JPEG', 170, 10, 25, 25);
+  }
+
   // Header
-  doc.setFontSize(22);
+  doc.setFontSize(18);
   doc.setTextColor(27, 31, 59); // Primary color
   doc.text(orgName, 14, 22);
   
@@ -69,7 +77,7 @@ export async function generateMonthlyReport(monthString: string) {
     formatCFA(inc.amount)
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 80,
     head: [['Date', 'Réf', 'Source', 'Type', 'Montant']],
     body: incomeRows.length > 0 ? incomeRows : [['-', '-', 'Aucune entrée', '-', '-']],
@@ -78,7 +86,8 @@ export async function generateMonthlyReport(monthString: string) {
   });
 
   // Expenses Table
-  const finalY = (doc as any).lastAutoTable.finalY || 80;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const finalY = (doc as any).lastAutoTable?.finalY || 80;
   
   doc.text("Détail des Dépenses", 14, finalY + 15);
   
@@ -89,7 +98,7 @@ export async function generateMonthlyReport(monthString: string) {
     formatCFA(exp.amount)
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: finalY + 20,
     head: [['Date', 'Réf', 'Catégorie', 'Montant']],
     body: expenseRows.length > 0 ? expenseRows : [['-', '-', 'Aucune dépense', '-']],
@@ -102,7 +111,7 @@ export async function generateMonthlyReport(monthString: string) {
 
 export async function generateContributorReport(contributorIds: string[]) {
   const { data: org } = await supabase.from('organization').select('*').limit(1).maybeSingle();
-  const orgName = org?.name || "Comité des Jeunes";
+  const orgName = org?.name || "COMITÉ JOSEPH pour les Etudes Pastorales";
 
   const { data: contributors } = await supabase
     .from('contributors')
@@ -119,9 +128,21 @@ export async function generateContributorReport(contributorIds: string[]) {
     .select('*')
     .in('contributorId', contributorIds);
 
-  const doc = new jsPDF() as jsPDFCustom;
+  const doc = new jsPDF();
   
-  doc.setFontSize(22);
+  // Load and add logo
+  const img = new window.Image();
+  img.src = '/Logo%20C.jpg';
+  await new Promise((resolve) => {
+    img.onload = resolve;
+    img.onerror = resolve;
+  });
+  
+  if (img.complete && img.naturalWidth > 0) {
+    doc.addImage(img, 'JPEG', 170, 10, 25, 25);
+  }
+
+  doc.setFontSize(18);
   doc.setTextColor(27, 31, 59);
   doc.text(orgName, 14, 22);
   
@@ -150,7 +171,7 @@ export async function generateContributorReport(contributorIds: string[]) {
       formatCFA(inc.amount)
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: currentY + 12,
       head: [['Date', 'Réf', 'Type', 'Montant']],
       body: incomeRows.length > 0 ? incomeRows : [['-', '-', 'Aucun paiement', '-']],
@@ -159,7 +180,8 @@ export async function generateContributorReport(contributorIds: string[]) {
       margin: { bottom: 20 }
     });
 
-    currentY = (doc as any).lastAutoTable.finalY + 20;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    currentY = (doc as any).lastAutoTable?.finalY + 20;
     
     // Add page if needed
     if (currentY > 250) {

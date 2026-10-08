@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
+import {
   Home, 
   Users, 
   UserPlus, 
@@ -14,8 +14,9 @@ import {
   ChevronDown,
   Grid
 } from "lucide-react";
+import Image from "next/image";
 
-export function Sidebar({ onClose, orgName = "CJEP Asso" }: { onClose?: () => void, orgName?: string }) {
+export function Sidebar({ onClose, orgName = "COMITÉ JOSEPH" }: { onClose?: () => void, orgName?: string }) {
   const pathname = usePathname();
 
   const navigation = [
@@ -33,10 +34,10 @@ export function Sidebar({ onClose, orgName = "CJEP Asso" }: { onClose?: () => vo
     <aside className="w-64 bg-card border-r border-border h-full flex flex-col transition-colors duration-200">
       <div className="p-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl">
-            CJ
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+            <Image src="/Logo%20C.jpg" alt="Logo" width={40} height={40} className="object-cover" />
           </div>
-          <span className="text-xl font-extrabold tracking-tight text-primary">CJEP</span>
+          <span className="text-xl font-extrabold tracking-tight text-primary">COMITÉ JOSEPH</span>
         </Link>
       </div>
 

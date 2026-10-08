@@ -1,14 +1,15 @@
 import Link from "next/link";
+import Image from "next/image";
 import { LayoutDashboard, Users, User, CreditCard, Banknote, ListTodo, FileText, Settings, LogOut, Search, Bell, HelpCircle } from "lucide-react";
 
 export function Sidebar() {
   return (
     <aside className="w-64 bg-white border-r border-border h-screen flex flex-col fixed left-0 top-0">
       <div className="p-6 flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-          <span className="text-white font-bold">C</span>
+        <div className="w-8 h-8 rounded-md flex items-center justify-center overflow-hidden">
+          <Image src="/Logo%20C.jpg" alt="Logo" width={32} height={32} className="object-cover" />
         </div>
-        <span className="text-xl font-bold text-primary">CJEP</span>
+        <span className="text-xl font-bold text-primary">COMITÉ JOSEPH</span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-2">

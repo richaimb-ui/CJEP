@@ -74,13 +74,13 @@ export default function SignupPage() {
                <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
                  <span className="text-black font-bold text-xl">C</span>
                </div>
-               <span className="font-bold text-xl tracking-wide">CJEP</span>
+               <span className="font-bold text-xl tracking-wide">COMITÉ JOSEPH</span>
             </div>
             <h2 className="text-3xl font-bold mb-4 leading-tight">
                &quot;Rejoignez notre mission.&quot;
             </h2>
             <div>
-              <p className="text-white/70 text-sm">Comité des Jeunes pour l&apos;Éducation et la Paix</p>
+              <p className="text-white/70 text-sm">Pour les Etudes Pastorales</p>
             </div>
           </div>
         </div>

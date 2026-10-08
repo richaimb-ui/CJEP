@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "CJEP - Tableau de bord",
+  title: "COMITÉ JOSEPH - Tableau de bord",
   description: "Plateforme de gestion financière des études pastorales",
 };
 
