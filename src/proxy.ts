@@ -8,7 +8,7 @@ const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
 const RATE_LIMIT = 50; // Nombre de requêtes max
 const WINDOW_MS = 60 * 1000; // Fenêtre d'1 minute
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Ignorer les fichiers statiques et images
   if (
     request.nextUrl.pathname.startsWith('/_next') ||
