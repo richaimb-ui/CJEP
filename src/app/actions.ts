@@ -246,3 +246,60 @@ export async function signOutAction() {
   redirect("/login");
 }
 
+export async function loginAction(formData: FormData) {
+  const email = (formData.get("email") as string)?.trim();
+  const password = formData.get("password") as string;
+
+  if (!email || !password) {
+    return { error: "Veuillez renseigner votre email et mot de passe." };
+  }
+
+  const supabase = await getSupabase();
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return { error: error.message === "Invalid login credentials" ? "Email ou mot de passe incorrect." : error.message };
+  }
+
+  // Check if user must change password
+  const { data: userData } = await supabase
+    .from("users")
+    .select("mustChangePassword")
+    .eq("email", email)
+    .limit(1)
+    .maybeSingle();
+
+  if (userData?.mustChangePassword) {
+    return { success: true, redirectUrl: "/change-password" };
+  }
+
+  return { success: true, redirectUrl: "/tableau-de-bord" };
+}
+
+export async function changePasswordAction(formData: FormData) {
+  const password = formData.get("password") as string;
+  const userEmail = formData.get("email") as string;
+
+  const supabase = await getSupabase();
+  const { error: authError } = await supabase.auth.updateUser({
+    password,
+  });
+
+  if (authError) {
+    return { error: authError.message };
+  }
+
+  if (userEmail) {
+    await supabase
+      .from("users")
+      .update({ mustChangePassword: false })
+      .eq("email", userEmail);
+  }
+
+  return { success: true };
+}
+
+

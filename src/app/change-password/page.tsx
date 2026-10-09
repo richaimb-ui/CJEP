@@ -6,23 +6,14 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { KeyRound, ArrowRight } from "lucide-react";
 
+import { changePasswordAction } from "@/app/actions";
+
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.email) {
-        setUserEmail(data.user.email);
-      } else {
-        router.push("/login");
-      }
-    });
-  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,23 +30,19 @@ export default function ChangePasswordPage() {
     setIsPending(true);
 
     try {
-      // 1. Mettre à jour le mot de passe dans Supabase Auth
-      const { error: authError } = await supabase.auth.updateUser({
-        password: password
-      });
+      const formData = new FormData();
+      formData.append("password", password);
+      formData.append("email", userEmail);
 
-      if (authError) throw authError;
+      const result = await changePasswordAction(formData);
 
-      // 2. Mettre à jour la table users pour désactiver mustChangePassword
-      const { error: dbError } = await supabase
-        .from('users')
-        .update({ mustChangePassword: false })
-        .eq('email', userEmail);
-
-      if (dbError) throw dbError;
-
-      toast.success("Mot de passe mis à jour avec succès !");
-      router.push("/tableau-de-bord");
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Mot de passe mis à jour avec succès !");
+        router.push("/tableau-de-bord");
+        router.refresh();
+      }
     } catch (error: unknown) {
       const err = error as Error;
       toast.error(err.message || "Erreur lors de la mise à jour");

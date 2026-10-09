@@ -4,12 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { loginAction } from "@/app/actions";
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -19,27 +18,18 @@ export default function LoginPage() {
     setIsPending(true);
 
     try {
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
 
-      if (error) throw error;
+      const result = await loginAction(formData);
 
-      // Check if user must change password
-      const { data: userData } = await supabase
-        .from('users')
-        .select('mustChangePassword')
-        .eq('email', email)
-        .limit(1)
-        .maybeSingle();
-
-      if (userData?.mustChangePassword) {
-        toast.info("Vous devez changer votre mot de passe.");
-        router.push("/change-password");
-      } else {
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.success) {
         toast.success("Connexion réussie !");
-        router.push("/tableau-de-bord");
+        router.push(result.redirectUrl || "/tableau-de-bord");
+        router.refresh();
       }
     } catch (error: unknown) {
       const err = error as Error;
