@@ -238,3 +238,11 @@ export async function deleteUser(id: string) {
   }
   revalidatePath("/parametres");
 }
+
+export async function signOutAction() {
+  const supabase = await getSupabase();
+  await supabase.auth.signOut();
+  const { redirect } = await import("next/navigation");
+  redirect("/login");
+}
+
