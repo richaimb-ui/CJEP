@@ -31,8 +31,10 @@ export function MembreModal({ user }: { user?: User }) {
   const handleShareWhatsApp = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!user || !user.phone) return;
-    const pwdText = sharePassword ? `\nMot de passe temporaire : ${sharePassword}\n\n🚨 Ce mot de passe est à usage unique. Il vous sera demandé de le changer impérativement lors de votre première connexion.` : `\nVotre mot de passe vous a été communiqué par l'administrateur.`;
-    const message = `Bonjour ${user.name},\nVoici vos informations de connexion pour le tableau de bord CJEP.\nLien: https://cjep.org\nEmail: ${user.email}${pwdText}`;
+    const pwdText = sharePassword 
+      ? `\n🔑 Mot de passe temporaire : ${sharePassword}\n\n🚨 Note de sécurité : Ce mot de passe est à usage unique. Il vous sera demandé de définir votre mot de passe personnel dès votre première connexion.` 
+      : `\nVotre mot de passe vous a été communiqué par l'administrateur.`;
+    const message = `Bonjour ${user.name},\n\nC'est avec une grande joie que nous vous accueillons au sein du Comité Joseph ! Votre engagement à nos côtés est précieux pour notre mission.\n\nVoici vos accès à la plateforme :\n🌐 Lien d'accès : https://www.rezocjep.net/login\n📧 Email : ${user.email}${pwdText}\n\nBienvenue parmi nous ! ✨\n— L'équipe du Comité Joseph`;
     const url = `https://wa.me/${user.phone.replace(/[^0-9+]/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -40,9 +42,11 @@ export function MembreModal({ user }: { user?: User }) {
   const handleShareEmail = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!user || !user.email) return;
-    const pwdText = sharePassword ? `\nMot de passe temporaire : ${sharePassword}\n\n🚨 Ce mot de passe est à usage unique. Il vous sera demandé de le changer impérativement lors de votre première connexion.` : `\nVotre mot de passe vous a été communiqué par l'administrateur.`;
-    const subject = `Vos accès CJEP`;
-    const body = `Bonjour ${user.name},\nVoici vos informations de connexion pour le tableau de bord CJEP.\nLien: https://cjep.org\nEmail: ${user.email}${pwdText}`;
+    const pwdText = sharePassword 
+      ? `\n🔑 Mot de passe temporaire : ${sharePassword}\n\n🚨 Note de sécurité : Ce mot de passe est à usage unique. Il vous sera demandé de définir votre mot de passe personnel dès votre première connexion.` 
+      : `\nVotre mot de passe vous a été communiqué par l'administrateur.`;
+    const subject = `Bienvenue au sein du Comité Joseph - Vos accès à la plateforme`;
+    const body = `Bonjour ${user.name},\n\nC'est avec un réel enthousiasme que nous vous souhaitons la bienvenue au sein du Comité Joseph.\n\nVotre présence et votre engagement à nos côtés sont précieux pour accomplir notre mission d'accompagnement et de soutien.\n\nVoici vos accès à notre espace de gestion :\n👉 Lien d'accès : https://www.rezocjep.net/login\n👉 Identifiant (Email) : ${user.email}${pwdText}\n\nNous nous réjouissons de cette belle collaboration à venir.\n\nFraternellement,\nL'équipe du Comité Joseph`;
     const url = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(url, '_blank');
   };
