@@ -119,7 +119,15 @@ export function EntreeModal({ contributors = [] }: { contributors?: any[] }) {
                 <label className="block text-sm font-semibold text-gray-500 mb-1">
                   Montant total (FCFA)
                 </label>
-                <input type="number" name="amount" min="1" required className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <input 
+                  type="number" 
+                  name="amount" 
+                  min="1" 
+                  step="any"
+                  placeholder="Ex: 500"
+                  required 
+                  className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" 
+                />
                 {type === "Cotisation" && monthsCount > 1 && (
                   <p className="text-xs text-gray-400 mt-1">Le montant sera divisé par {monthsCount} mois.</p>
                 )}

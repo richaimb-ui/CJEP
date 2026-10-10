@@ -436,7 +436,7 @@ function createManual() {
     'Prenom & Nom : Obligatoires (ex: Jean-Marc KOUADIO).',
     'Email : Optionnel (recommande si disponible).',
     'Telephone : Optionnel (utile pour les rappels WhatsApp).',
-    'Engagement mensuel : Montant recurrent en FCFA promis chaque mois (ex: 10 000).'
+    'Engagement mensuel : Montant recurrent en FCFA promis chaque mois (ex: 500, 1 000, 10 000).'
   ]);
 
   curY += drawStepCard(colX, curY, colW, 4, 'Enregistrer le contributeur', 'Appuyez sur le bouton « Enregistrer le contributeur » fixe tout en bas de la fenetre.', [

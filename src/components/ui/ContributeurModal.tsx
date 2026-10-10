@@ -101,10 +101,11 @@ export function ContributeurModal() {
                     name="engagement" 
                     min="0" 
                     defaultValue="0" 
-                    step="1000"
+                    step="500"
+                    placeholder="Ex: 500"
                     className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" 
                   />
-                  <p className="text-xs text-gray-400 mt-1">Montant récurrent de la cotisation mensuelle promise.</p>
+                  <p className="text-xs text-gray-400 mt-1">Montant récurrent de la cotisation mensuelle promise (ex: 500, 1 000 FCFA...).</p>
                 </div>
               </div>
 
