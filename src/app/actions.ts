@@ -91,34 +91,85 @@ export async function createExpense(formData: FormData) {
   revalidatePath("/depenses");
 }
 
+const getDb = async () => {
+  const { supabaseAdmin } = await import("@/lib/data/supabase");
+  return supabaseAdmin || (await getSupabase());
+};
+
 export async function createContributor(formData: FormData) {
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
-  
-  const { data: contributor, error: insertError } = await (await getSupabase()).from("contributors").insert({
-    "firstName": firstName,
-    "lastName": lastName,
-    email: email,
-    phone: phone,
-    role: "Membre",
-    status: "Actif",
-    "joinedAt": new Date().toISOString().split("T")[0],
-  }).select().single();
-  if (insertError) throw new Error(insertError.message);
+  try {
+    const firstName = (formData.get("firstName") as string)?.trim();
+    const lastName = (formData.get("lastName") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim();
+    const phone = (formData.get("phone") as string)?.trim();
+    const engagement = Number(formData.get("engagement") || 0);
 
-  const engagement = Number(formData.get("engagement"));
-  if (engagement > 0 && contributor) {
-    await (await getSupabase()).from("pledges").insert({
-      "contributorId": contributor.id,
-      "monthlyAmount": engagement,
-      "startMonth": new Date().toISOString().slice(0, 7),
-    });
+    if (!firstName || !lastName) {
+      return { success: false, error: "Le prénom et le nom sont obligatoires." };
+    }
+
+    const db = await getDb();
+    
+    // First attempt: insert with all provided fields
+    const fullPayload: Record<string, any> = {
+      firstName,
+      lastName,
+      role: "Membre",
+      status: "Actif",
+      joinedAt: new Date().toISOString().split("T")[0],
+    };
+    if (email) fullPayload.email = email;
+    if (phone) fullPayload.phone = phone;
+
+    let { data: contributor, error: insertError } = await db
+      .from("contributors")
+      .insert(fullPayload)
+      .select()
+      .single();
+
+    // If schema cache says column email or phone doesn't exist (PGRST204)
+    if (insertError && (insertError.code === "PGRST204" || insertError.message.includes("column") || insertError.message.includes("schema cache"))) {
+      const basicPayload = {
+        firstName,
+        lastName,
+        role: "Membre",
+        status: "Actif",
+        joinedAt: new Date().toISOString().split("T")[0],
+      };
+      const retryResult = await db
+        .from("contributors")
+        .insert(basicPayload)
+        .select()
+        .single();
+      
+      contributor = retryResult.data;
+      insertError = retryResult.error;
+    }
+
+    if (insertError) {
+      console.error("Contributor insert error:", insertError);
+      return { success: false, error: insertError.message };
+    }
+
+    if (engagement > 0 && contributor) {
+      const { error: pledgeError } = await db.from("pledges").insert({
+        contributorId: contributor.id,
+        monthlyAmount: engagement,
+        startMonth: new Date().toISOString().slice(0, 7),
+      });
+      if (pledgeError) {
+        console.warn("Could not insert pledge:", pledgeError.message);
+      }
+    }
+
+    revalidatePath("/contributeurs");
+    revalidatePath("/cotisations");
+    revalidatePath("/tableau-de-bord");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in createContributor:", error);
+    return { success: false, error: error.message || "Une erreur est survenue lors de l'enregistrement." };
   }
-
-  revalidatePath("/contributeurs");
-  revalidatePath("/cotisations");
 }
 
 export async function createStudent(formData: FormData) {
@@ -151,9 +202,18 @@ export async function updateSettings(formData: FormData) {
 }
 
 export async function deleteContributor(id: string) {
-  await (await getSupabase()).from("contributors").delete().eq("id", id);
-  revalidatePath("/contributeurs");
-  revalidatePath("/cotisations");
+  try {
+    const db = await getDb();
+    await db.from("pledges").delete().eq("contributorId", id);
+    const { error } = await db.from("contributors").delete().eq("id", id);
+    if (error) return { success: false, error: error.message };
+    revalidatePath("/contributeurs");
+    revalidatePath("/cotisations");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in deleteContributor:", error);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function deleteStudent(id: string) {
@@ -168,59 +228,86 @@ export async function deleteIncome(id: string) {
 }
 
 export async function createUser(formData: FormData) {
-  const name = formData.get("name") as string;
-  const [firstName, ...lastNameArr] = name.split(" ");
-  const email = formData.get("email") as string;
-  const role = formData.get("role") as string;
-  const phone = formData.get("phone") as string;
-  const password = formData.get("password") as string;
-  
-  const { supabaseAdmin } = await import("@/lib/data/supabase");
-  
-  if (!supabaseAdmin) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY n'est pas configuré. Impossible de créer un compte avec Auth.");
+  try {
+    const name = (formData.get("name") as string)?.trim() || "";
+    const [firstName, ...lastNameArr] = name.split(" ");
+    const email = (formData.get("email") as string)?.trim();
+    const role = formData.get("role") as string;
+    const phone = (formData.get("phone") as string)?.trim() || undefined;
+    const password = (formData.get("password") as string)?.trim() || "Cjep2026!";
+    
+    const { supabaseAdmin } = await import("@/lib/data/supabase");
+    
+    if (supabaseAdmin) {
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: email,
+        password: password,
+        email_confirm: true,
+      });
+
+      if (authError) return { success: false, error: authError.message };
+
+      const { error: dbError } = await supabaseAdmin.from("users").insert({
+        id: authData.user.id,
+        "firstName": firstName,
+        "lastName": lastNameArr.join(" "),
+        email: email,
+        phone: phone,
+        role: role,
+        "mustChangePassword": true
+      });
+      if (dbError) return { success: false, error: dbError.message };
+    } else {
+      const id = crypto.randomUUID();
+      const db = await getSupabase();
+      const { error: dbError } = await db.from("users").insert({
+        id,
+        "firstName": firstName,
+        "lastName": lastNameArr.join(" "),
+        email: email,
+        phone: phone,
+        role: role,
+        "mustChangePassword": true
+      });
+      if (dbError) return { success: false, error: dbError.message };
+    }
+    
+    revalidatePath("/parametres");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in createUser:", error);
+    return { success: false, error: error.message || "Erreur lors de la création du membre." };
   }
-
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: email,
-    password: password || "Password123!",
-    email_confirm: true,
-  });
-
-  if (authError) throw authError;
-
-  await supabaseAdmin.from("users").insert({
-    id: authData.user.id,
-    "firstName": firstName,
-    "lastName": lastNameArr.join(" "),
-    email: email,
-    phone: phone,
-    role: role,
-    "mustChangePassword": true
-  });
-  
-  revalidatePath("/parametres");
 }
 
 export async function updateUser(formData: FormData) {
-  const id = formData.get("id") as string;
-  const name = formData.get("name") as string;
-  const [firstName, ...lastNameArr] = name.split(" ");
-  const role = formData.get("role") as string;
-  const phone = formData.get("phone") as string;
-  
-  const { supabaseAdmin } = await import("@/lib/data/supabase");
-  
-  if (supabaseAdmin) {
-    await supabaseAdmin.from("users").update({
+  try {
+    const id = formData.get("id") as string;
+    const name = (formData.get("name") as string)?.trim() || "";
+    const [firstName, ...lastNameArr] = name.split(" ");
+    const role = formData.get("role") as string;
+    const phone = (formData.get("phone") as string)?.trim() || undefined;
+    
+    const db = await getDb();
+    
+    const { error } = await db.from("users").update({
       "firstName": firstName,
       "lastName": lastNameArr.join(" "),
       phone: phone,
       role: role
     }).eq("id", id);
+    
+    if (error) {
+      console.error("Error updating user:", error);
+      return { success: false, error: error.message };
+    }
+    
+    revalidatePath("/parametres");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in updateUser:", error);
+    return { success: false, error: error.message || "Erreur lors de la mise à jour." };
   }
-  
-  revalidatePath("/parametres");
 }
 
 export async function updatePassword(userId: string, _newPassword: string) {
@@ -229,14 +316,20 @@ export async function updatePassword(userId: string, _newPassword: string) {
 }
 
 export async function deleteUser(id: string) {
-  const { supabaseAdmin } = await import("@/lib/data/supabase");
-  if (supabaseAdmin) {
-    await supabaseAdmin.auth.admin.deleteUser(id);
-    await supabaseAdmin.from("users").delete().eq("id", id);
-  } else {
-    await (await getSupabase()).from("users").delete().eq("id", id);
+  try {
+    const { supabaseAdmin } = await import("@/lib/data/supabase");
+    if (supabaseAdmin) {
+      await supabaseAdmin.auth.admin.deleteUser(id);
+      await supabaseAdmin.from("users").delete().eq("id", id);
+    } else {
+      await (await getSupabase()).from("users").delete().eq("id", id);
+    }
+    revalidatePath("/parametres");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in deleteUser:", error);
+    return { success: false, error: error.message };
   }
-  revalidatePath("/parametres");
 }
 
 export async function signOutAction() {

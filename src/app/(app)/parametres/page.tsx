@@ -53,7 +53,7 @@ export default async function ParametresPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 w-10 whitespace-nowrap">
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <MembreModal user={{ id: user.id, name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role as any, phone: user.phone || '' }} />
                       <form action={async () => {
                         "use server";

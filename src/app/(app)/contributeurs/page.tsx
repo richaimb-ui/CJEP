@@ -66,8 +66,8 @@ export default async function ContributeursPage(props: { searchParams: Promise<{
                       </div>
                     </td>
                     <td className="py-4 whitespace-nowrap">
-                      <p className="text-gray-700 dark:text-gray-300">-</p>
-                      <p className="text-xs text-gray-500">-</p>
+                      <p className="text-gray-700 dark:text-gray-300">{c.phone || "-"}</p>
+                      <p className="text-xs text-gray-500">{c.email || "-"}</p>
                     </td>
                     <td className="py-4 font-semibold whitespace-nowrap">
                       {engagement > 0 ? `${engagement.toLocaleString('fr-FR')} FCFA` : <span className="text-gray-400 italic font-normal">Ponctuel</span>}
