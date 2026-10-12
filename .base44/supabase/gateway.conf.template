@@ -1,0 +1,33 @@
+# Base44 sandbox: single API origin for the local Supabase-compatible services.
+# supabase-js is configured with one URL and expects /auth/v1 (GoTrue)
+# and /rest/v1 (PostgREST) below it.
+# BASE44_PUBLIC_HOST_SUFFIX is substituted by the nginx image entrypoint
+# (it envsubst's every *.template in /etc/nginx/templates).
+server {
+    listen 8000;
+    server_name _;
+
+    # The app is loaded from https://3000-${BASE44_PUBLIC_HOST_SUFFIX},
+    # so cross-origin calls from the browser need CORS headers.
+    add_header Access-Control-Allow-Origin "https://3000-${BASE44_PUBLIC_HOST_SUFFIX}" always;
+    add_header Access-Control-Allow-Credentials "true" always;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD" always;
+    add_header Access-Control-Allow-Headers "authorization, apikey, content-type, prefer, accept, accept-profile, content-profile, x-client-info, x-supabase-api-version, range, x-upsert, cache-control, pragma" always;
+    add_header Access-Control-Expose-Headers "content-range, content-location, x-total-count, link" always;
+    add_header Access-Control-Max-Age "86400" always;
+
+    if ($request_method = OPTIONS) {
+        return 204;
+    }
+
+    location /auth/v1/ {
+        proxy_pass http://auth:9999/;
+        proxy_set_header Host $host;
+        proxy_http_version 1.1;
+    }
+
+    location /rest/v1/ {
+        proxy_pass http://rest:3000/;
+        proxy_set_header Host $host;
+    }
+}

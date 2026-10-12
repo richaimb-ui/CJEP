@@ -1,0 +1,180 @@
+# Base44 sandbox runbook (do not use the repo's production setup here).
+#
+# The app is a Next.js 16 frontend that talks to Supabase (Auth + Postgres REST).
+# Instead of a managed Supabase project, this stack runs a local Supabase-compatible
+# backend so the preview works with no external credentials:
+#
+#   db       Postgres with the Supabase roles/auth schema (supabase/postgres image)
+#   auth     GoTrue      -> /auth/v1   (email + password sessions)
+#   rest     PostgREST   -> /rest/v1   (the data API)
+#   api      nginx       -> one API origin on host port 8000 (what supabase-js needs)
+#   web      next dev    -> host port 3000, the app itself
+#
+# The API URL handed to the app is the sandbox public host for port 8000, because the
+# browser must reach it too. The JWT secret and the two API keys below are the
+# well-known local Supabase development credentials (not real secrets).
+name: cjep
+
+services:
+  db:
+    image: supabase/postgres:17.11.0.004
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres -h 127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
+    restart: on-failure
+
+  auth:
+    image: supabase/gotrue:v2.197.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: "9999"
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:postgres@db:5432/postgres
+      GOTRUE_SITE_URL: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+      GOTRUE_URI_ALLOW_LIST: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}/*
+      GOTRUE_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      GOTRUE_JWT_EXP: "3600"
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_ISSUER: https://8000-${BASE44_PUBLIC_HOST_SUFFIX}
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_LOG_LEVEL: info
+      API_EXTERNAL_URL: https://8000-${BASE44_PUBLIC_HOST_SUFFIX}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9999/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: on-failure
+
+  rest:
+    image: postgrest/postgrest:v14.18
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:postgres@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_LOG_LEVEL: info
+    # No healthcheck: the postgrest image is distroless (no shell, wget or curl).
+    # The `api` gateway probe below covers PostgREST and reports when it is down.
+    restart: on-failure
+
+  api:
+    image: nginx:alpine
+    depends_on:
+      auth:
+        condition: service_healthy
+      rest:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    environment:
+      BASE44_PUBLIC_HOST_SUFFIX: ${BASE44_PUBLIC_HOST_SUFFIX}
+    volumes:
+      - ./.base44/supabase/gateway.conf.template:/etc/nginx/templates/gateway.conf.template:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          wget -q -O /dev/null http://127.0.0.1:8000/auth/v1/health
+          || { echo "auth (GoTrue) is not responding"; exit 1; };
+          wget -q -O /dev/null http://127.0.0.1:8000/rest/v1/
+          || { echo "rest (PostgREST) is not responding"; exit 1; }
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: on-failure
+
+  db-init:
+    image: postgres:16
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./.base44/supabase/init.sql:/sql/init.sql:ro
+    command:
+      - psql
+      - -v
+      - ON_ERROR_STOP=1
+      - -h
+      - db
+      - -U
+      - supabase_admin
+      - -d
+      - postgres
+      - -f
+      - /sql/init.sql
+
+  seed-admin:
+    image: node:22
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    environment:
+      SUPABASE_INTERNAL_URL: http://api:8000
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      SEED_ADMIN_EMAIL: richaimb@gmail.com
+      SEED_ADMIN_PASSWORD: SuperPassword123!
+    volumes:
+      - ./.base44/supabase/seed-admin.mjs:/scripts/seed-admin.mjs:ro
+    command: ["node", "/scripts/seed-admin.mjs"]
+
+  web:
+    image: node:22
+    working_dir: /app
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - BASE44_PREVIEW_MODE
+      - BASE44_PUBLIC_HOST_SUFFIX
+      - BASE44_SANDBOX_HOST_DOMAIN
+      - NEXT_PUBLIC_SUPABASE_URL=https://8000-${BASE44_PUBLIC_HOST_SUFFIX}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - NEXT_TELEMETRY_DISABLED=1
+    volumes:
+      - .:/app
+      - node-modules:/app/node_modules
+    command: ["sh", "-ec", "npm ci --no-audit --no-fund && exec npx next dev --hostname 0.0.0.0 --port 3000"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/login"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+    restart: on-failure
+
+volumes:
+  db-data:
+  node-modules:
