@@ -31,9 +31,12 @@ Supabase-compatible backend, so the sandbox needs no third-party credentials:
 | `auth` | `supabase/gotrue` | `/auth/v1` (email + password sessions) |
 | `rest` | `postgrest/postgrest` | `/rest/v1` (the data API) |
 | `api` | `nginx:alpine` | one API origin on port 8000, CORS for the preview origin |
-| `db-init` | `postgres` | applies `.base44/supabase/init.sql` (schema + grants) |
-| `seed-admin` | `node:22` | creates the admin account (mirrors `create_admin.js`) |
-| `web` | `node:22` | `next dev`, source bind-mounted, `npm ci` on start |
+| `db-init` | `postgres` | applies `.base44/supabase/init.sql` (schema + grants), then exits |
+| `web` | `node:22` | `next dev`, source bind-mounted; `npm ci` then the admin seed (`node .base44/supabase/seed-admin.mjs`) on start |
+
+The admin account is seeded by the `web` startup command rather than a one-shot service so that no
+container is left sitting in an exited state; the script is idempotent and never overwrites a password
+that was changed in the app.
 
 Local development login: **richaimb@gmail.com / SuperPassword123!** (same account as `create_admin.js`).
 `mustChangePassword` is false for it, so it goes straight to the dashboard.

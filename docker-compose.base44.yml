@@ -127,22 +127,6 @@ services:
       - -f
       - /sql/init.sql
 
-  seed-admin:
-    image: node:22
-    depends_on:
-      db-init:
-        condition: service_completed_successfully
-      api:
-        condition: service_healthy
-    environment:
-      SUPABASE_INTERNAL_URL: http://api:8000
-      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
-      SEED_ADMIN_EMAIL: richaimb@gmail.com
-      SEED_ADMIN_PASSWORD: SuperPassword123!
-    volumes:
-      - ./.base44/supabase/seed-admin.mjs:/scripts/seed-admin.mjs:ro
-    command: ["node", "/scripts/seed-admin.mjs"]
-
   web:
     image: node:22
     working_dir: /app
@@ -163,10 +147,15 @@ services:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
       - NEXT_TELEMETRY_DISABLED=1
+      # Development admin account for the local database (same account as create_admin.js);
+      # seeding runs here so the stack has no one-shot job left in an exited state.
+      - SUPABASE_INTERNAL_URL=http://api:8000
+      - SEED_ADMIN_EMAIL=richaimb@gmail.com
+      - SEED_ADMIN_PASSWORD=SuperPassword123!
     volumes:
       - .:/app
       - node-modules:/app/node_modules
-    command: ["sh", "-ec", "npm ci --no-audit --no-fund && exec npx next dev --hostname 0.0.0.0 --port 3000"]
+    command: ["sh", "-ec", "npm ci --no-audit --no-fund && node .base44/supabase/seed-admin.mjs && exec npx next dev --hostname 0.0.0.0 --port 3000"]
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/login"]
       interval: 15s

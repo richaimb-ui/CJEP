@@ -45,13 +45,8 @@ async function main() {
 
   let userId = await findUserId();
   if (userId) {
-    const res = await fetch(`${base}/auth/v1/admin/users/${userId}`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify({ password }),
-    });
-    if (!res.ok) throw new Error(`password reset failed (${res.status}): ${await res.text()}`);
-    console.log(`Admin user already existed, password reset: ${email}`);
+    // Keep whatever password the account currently has (it may have been changed in the app).
+    console.log(`Admin user already exists, leaving its password alone: ${email}`);
   } else {
     const res = await fetch(`${base}/auth/v1/admin/users`, {
       method: "POST",
