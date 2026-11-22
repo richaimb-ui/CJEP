@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Filter, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Filter, Trash2, FileText } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { ContributeurModal } from "@/components/ui/ContributeurModal";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -24,6 +25,14 @@ export default async function ContributeursPage(props: { searchParams: Promise<{
         <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-gray-900">Contributeurs</h1>
         <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <SearchInput placeholder="Rechercher un contributeur..." />
+          <Link
+            href="/rapports"
+            className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+            title="Générer un rapport personnalisé des contributeurs"
+          >
+            <FileText className="w-4 h-4 text-primary" />
+            <span className="hidden sm:inline">Rapport personnalisé</span>
+          </Link>
           <button title="Filtres avancés" className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors">
             <Filter className="w-4 h-4" />
             <span className="hidden md:inline">Filtres</span>
